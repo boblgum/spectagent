@@ -1,0 +1,29 @@
+services:
+  opencode:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agentic-opencode:latest
+    container_name: agentic-opencode
+    stdin_open: true   # docker run -i
+    tty: true          # docker run -t
+    working_dir: /workspace
+
+    volumes:
+      # ── Workspace (app folder) ──────────────────────────────────────
+      # Created on host if it does not exist
+      - ${APP_DIR:-./workspace}:/workspace
+
+      # ── Configuration mounts (read-only where possible) ─────────────
+      # opencode config (e.g. opencode.json)
+      - ${OPENCODE_CONFIG_DIR:-./config/opencode}:/root/.config/opencode
+
+      # git global config
+      - ${GIT_CONFIG_FILE:-./config/git/.gitconfig}:/root/.gitconfig:ro
+
+    environment:
+      # Pass API keys to opencode at runtime
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENCODE_API_KEY=${OPENCODE_API_KEY:-}
+

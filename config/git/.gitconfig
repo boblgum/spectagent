@@ -1,0 +1,5 @@
+# git global config – mounted read-only into the container
+[user]
+	name = Your Name
+	email = your@email.com
+
