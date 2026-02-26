@@ -1,12 +1,12 @@
-# Agentic – Opencode Docker Image
+# Spectagent – Github Spec Kit & Opencode Docker Image
 
-A self-contained Docker image based on **Alpine Linux (latest)** that bundles:
+A self-contained Docker image based on **Debian (stable-slim)** that bundles:
 
 | Tool | Purpose |
 |---|---|
 | **uv** | Fast Python package & project manager |
 | **Python** (latest stable, managed by uv) | Runtime |
-| **git** (latest from Alpine repos) | Version control |
+| **git** (latest from Debian repos) | Version control |
 | **opencode** (latest stable) | AI coding agent |
 
 ## Quick start
@@ -71,7 +71,7 @@ make specify ARGS="check"
 ## Directory layout
 
 ```
-agentic/
+spectagent/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .env.example          # template – copy to .env
@@ -124,6 +124,6 @@ docker run -it --rm \
   -v "$(pwd)/config/opencode:/root/.config/opencode" \
   -v "$(pwd)/config/git/.gitconfig:/root/.gitconfig:ro" \
   -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-  agentic-opencode:latest
+  spectagent:latest
 ```
 
