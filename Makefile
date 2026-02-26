@@ -1,51 +1,61 @@
 SERVICE := opencode
+COMPOSE := docker compose -f docker-compose.yml -f docker-compose.secrets.yml
 
 # ── Lifecycle ────────────────────────────────────────────────────────────────
 .PHONY: build up down restart logs
 
 build:          ## Build (or rebuild) the Docker image
-	docker compose build
+	$(COMPOSE) build
 
 up:             ## Start container in the background
-	docker compose up -d
+	$(COMPOSE) up -d
 
 down:           ## Stop and remove the container
-	docker compose down
+	$(COMPOSE) down
 
 restart:        ## Rebuild image and restart container
-	docker compose up -d --build
+	$(COMPOSE) up -d --build
 
 logs:           ## Follow container logs
-	docker compose logs -f $(SERVICE)
+	$(COMPOSE) logs -f $(SERVICE)
 
 # ── Shell / tool access ──────────────────────────────────────────────────────
 .PHONY: shell opencode specify python uv git
 
 shell:          ## Open a bash shell inside the container
-	docker compose exec $(SERVICE) bash
+	$(COMPOSE) exec $(SERVICE) bash
 
 opencode:       ## Run opencode inside the container (args: make opencode --help)
-	docker compose exec $(SERVICE) opencode $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
+	$(COMPOSE) exec $(SERVICE) opencode $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
 
 specify:        ## Run specify (spec-kit) inside the container (args: make specify check)
-	docker compose exec $(SERVICE) specify $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
+	$(COMPOSE) exec $(SERVICE) specify $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
 
 python:         ## Run python inside the container (args: make python --version)
-	docker compose exec $(SERVICE) python $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
+	$(COMPOSE) exec $(SERVICE) python $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
 
 uv:             ## Run uv inside the container (args: make uv --version)
-	docker compose exec $(SERVICE) uv $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
+	$(COMPOSE) exec $(SERVICE) uv $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
 
 git:            ## Run git inside the container (args: make git status)
-	docker compose exec $(SERVICE) git $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
+	$(COMPOSE) exec $(SERVICE) git $(ARGS) $(filter-out $@,$(MAKECMDGOALS))
 
 # ── Setup helpers ────────────────────────────────────────────────────────────
-.PHONY: init env
+.PHONY: init env secrets
 
 env:            ## Create .env from template if it does not exist yet
-	@test -f .env && echo ".env already exists, skipping." || (cp .env.example .env && echo "Created .env – fill in your API keys.")
+	@test -f .env && echo ".env already exists, skipping." || (cp .env.example .env && echo "Created .env – edit host paths if needed.")
 
-init: env build up ## Full first-time setup: create .env, build image, start container
+secrets:        ## Create docker-compose.secrets.yml from example and secrets/ dir
+	@mkdir -p secrets
+	@test -f docker-compose.secrets.yml \
+		&& echo "docker-compose.secrets.yml already exists, skipping." \
+		|| (cp docker-compose.secrets.yml.example docker-compose.secrets.yml \
+		    && echo "Created docker-compose.secrets.yml – edit to select your secrets.")
+	@echo "Put each API key into its own file under secrets/ (chmod 600)."
+	@echo "Example:  echo -n 'sk-ant-…' > secrets/anthropic_api_key.txt && chmod 600 secrets/anthropic_api_key.txt"
+
+init: env secrets build up ## Full first-time setup: env, secrets, build, start
 
 # ── Help ─────────────────────────────────────────────────────────────────────
 .PHONY: help

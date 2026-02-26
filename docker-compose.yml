@@ -21,9 +21,7 @@ services:
       # git global config
       - ${GIT_CONFIG_FILE:-./config/git/.gitconfig}:/root/.gitconfig:ro
 
-    environment:
-      # Pass API keys to opencode at runtime
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - OPENCODE_API_KEY=${OPENCODE_API_KEY:-}
+    # ── Secrets ───────────────────────────────────────────────────────
+    # Defined by each user in docker-compose.secrets.yml
+    # (see docker-compose.secrets.yml.example)
 

@@ -40,8 +40,13 @@ RUN mkdir -p /workspace \
 
 WORKDIR /workspace
 
+# ── Entrypoint: loads Docker secrets into env vars at runtime ────────
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # ── Initialize Spec-Kit in workspace with opencode agent ─────────────
 RUN specify init . --ai opencode --no-git --script sh
 
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/bin/bash"]
 
