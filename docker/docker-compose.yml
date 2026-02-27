@@ -3,11 +3,15 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        AGENT: ${AGENT:-opencode}
     image: spectagent:latest
     container_name: spectagent
     stdin_open: true   # docker run -i
     tty: true          # docker run -t
     working_dir: /workspace
+    environment:
+      - AGENT=${AGENT:-opencode}
 
     volumes:
       # ── Workspace (app folder) ──────────────────────────────────────
@@ -15,8 +19,8 @@ services:
       - ${APP_DIR:-../workspace}:/workspace
 
       # ── Configuration mounts (read-only where possible) ─────────────
-      # opencode config (e.g. opencode.json)
-      - ${OPENCODE_CONFIG_DIR:-../config/opencode}:/root/.config/opencode
+      # Agent config (only the selected agent's config dir is mounted)
+      - ${AGENT_CONFIG_DIR:-../config/${AGENT:-opencode}}:/root/.config/${AGENT:-opencode}
 
       # git global config
       - ${GIT_CONFIG_FILE:-../config/git/.gitconfig}:/root/.gitconfig:ro

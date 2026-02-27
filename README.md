@@ -1,4 +1,4 @@
-# Spectagent – Github Spec Kit & Opencode Docker Image
+# Spectagent – Github Spec Kit & AI Agent Docker Image
 
 A self-contained Docker image based on **Debian (stable-slim)** that bundles:
 
@@ -7,13 +7,18 @@ A self-contained Docker image based on **Debian (stable-slim)** that bundles:
 | **uv** | Fast Python package & project manager |
 | **Python** (latest stable, managed by uv) | Runtime |
 | **git** (latest from Debian repos) | Version control |
-| **opencode** (latest stable) | AI coding agent |
+| **AI agent** (opencode or claude) | AI coding agent (selected at build time) |
 
 ## Quick start
 
 ```bash
-# 1. First-time setup: creates .env, docker-compose.secrets.yml, builds image, starts container
+# 1. First-time setup: creates .env, docker-compose.secrets.yml,
+#    presents agent selection menu, builds image, starts container
 make init
+
+# 1b. Or select/change agent at any time:
+make select-agent
+make build
 
 # 2. Edit docker/docker-compose.secrets.yml – uncomment only the providers you use
 
@@ -29,7 +34,7 @@ make restart
 make shell
 ```
 
-Inside the container you have `uv`, `python`, `git`, `opencode`, and `specify` available.
+Inside the container you have `uv`, `python`, `git`, your selected AI agent (`opencode` or `claude`), and `specify` available.
 
 ## Makefile targets
 
@@ -41,8 +46,10 @@ Run `make help` to list all available targets:
   down         Stop and remove the container
   restart      Rebuild image and restart container
   logs         Follow container logs
+  select-agent Interactive menu to choose the AI coding agent
   shell        Open a bash shell inside the container
   opencode     Run opencode inside the container
+  claude       Run claude inside the container
   specify      Run specify (spec-kit) inside the container
   python       Run python inside the container
   uv           Run uv inside the container
@@ -83,10 +90,14 @@ make specify ARGS="check"
 spectagent/
 ├── Makefile
 ├── README.md
+├── .agent                                  # persisted agent choice (git-ignored)
 ├── .dockerignore
 ├── .gitignore
 ├── docker/
 │   ├── Dockerfile
+│   ├── agents/                             # one install script per AI agent
+│   │   ├── opencode.sh
+│   │   └── claude.sh
 │   ├── docker-compose.yml                  # base – no secrets
 │   ├── docker-compose.secrets.yml.example  # template – committed
 │   ├── docker-compose.secrets.yml          # ← your secrets (git-ignored)
@@ -94,6 +105,8 @@ spectagent/
 │   └── entrypoint.sh                       # loads /run/secrets/* into env vars
 ├── config/
 │   ├── opencode/
+│   │   └── .gitkeep
+│   ├── claude/
 │   │   └── .gitkeep
 │   └── git/
 │       └── .gitconfig                      # → /root/.gitconfig (read-only)
@@ -109,12 +122,14 @@ All configuration and the workspace are **mounted from the host** – nothing is
 |---|---|---|
 | `./workspace` | `/workspace` | read-write |
 | `./config/opencode` | `/root/.config/opencode` | read-write |
+| `./config/claude` | `/root/.config/claude` | read-write |
 | `./config/git/.gitconfig` | `/root/.gitconfig` | read-only |
 
 Override the host paths via environment variables in `.env`:
 
 - `APP_DIR` – workspace directory
 - `OPENCODE_CONFIG_DIR` – opencode config directory
+- `CLAUDE_CONFIG_DIR` – claude config directory
 - `GIT_CONFIG_FILE` – git global config file
 
 ## Secrets (API keys)

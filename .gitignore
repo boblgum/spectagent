@@ -3,3 +3,7 @@
 secrets/*.txt
 docker/docker-compose.secrets.yml
 
+# Agent selection (user-specific)
+.agent
+
+workspace

@@ -1,3 +1,0 @@
-# This directory is mounted into the container as the opencode config dir.
-# Place your opencode.json here to customise the agent.
-

@@ -62,12 +62,13 @@ if [ -d "$SECRETS_DIR" ]; then
 fi
 
 # ── Initialize Spec-Kit in workspace (once) ───────────────────────────
-# specify init creates .specify/ and .opencode/ directories.
+# specify init creates .specify/ and agent-specific directories.
 # This must run at container start (not at build time) because
 # /workspace is a volume mount that hides the image layer.
+AGENT="${AGENT:-opencode}"
 if [ ! -d "/workspace/.specify" ]; then
-    echo "[spec-kit] Initializing Spec-Kit in /workspace …" >&2
-    specify init . --ai opencode --no-git --force --script sh 2>&1 | sed 's/^/[spec-kit] /' >&2
+    echo "[spec-kit] Initializing Spec-Kit in /workspace (agent: $AGENT) …" >&2
+    specify init . --ai "$AGENT" --no-git --force --script sh 2>&1 | sed 's/^/[spec-kit] /' >&2
     echo "[spec-kit] Done." >&2
 else
     echo "[spec-kit] .specify/ already exists, skipping init." >&2
