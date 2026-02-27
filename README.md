@@ -15,7 +15,7 @@ A self-contained Docker image based on **Debian (stable-slim)** that bundles:
 # 1. First-time setup: creates .env, docker-compose.secrets.yml, builds image, starts container
 make init
 
-# 2. Edit docker-compose.secrets.yml – uncomment only the providers you use
+# 2. Edit docker/docker-compose.secrets.yml – uncomment only the providers you use
 
 # 3. Create the secret files you selected and paste your keys
 echo -n "sk-ant-…" > secrets/anthropic_api_key.txt && chmod 600 secrets/anthropic_api_key.txt
@@ -48,7 +48,7 @@ Run `make help` to list all available targets:
   uv           Run uv inside the container
   git          Run git inside the container
   env          Create .env from template if it does not exist yet
-  secrets      Create docker-compose.secrets.yml from example and secrets/ dir
+  secrets      Create docker/docker-compose.secrets.yml from example and secrets/ dir
   init         Full first-time setup: env, secrets, build, start
 ```
 
@@ -81,21 +81,23 @@ make specify ARGS="check"
 
 ```
 spectagent/
-├── Dockerfile
-├── docker-compose.yml                  # base – no secrets
-├── docker-compose.secrets.yml.example  # template – committed
-├── docker-compose.secrets.yml          # ← your secrets (git-ignored)
-├── .env.example
+├── Makefile
+├── README.md
 ├── .dockerignore
-├── entrypoint.sh                       # loads /run/secrets/* into env vars
+├── .gitignore
+├── docker/
+│   ├── Dockerfile
+│   ├── docker-compose.yml                  # base – no secrets
+│   ├── docker-compose.secrets.yml.example  # template – committed
+│   ├── docker-compose.secrets.yml          # ← your secrets (git-ignored)
+│   ├── .env.example
+│   └── entrypoint.sh                       # loads /run/secrets/* into env vars
 ├── config/
 │   ├── opencode/
 │   │   └── .gitkeep
 │   └── git/
-│       └── .gitconfig                  # → /root/.gitconfig (read-only)
-├── secrets/                            # one key per file (git-ignored)
-│   └── .gitkeep
-└── workspace/
+│       └── .gitconfig                      # → /root/.gitconfig (read-only)
+└── secrets/                                # one key per file (git-ignored)
     └── .gitkeep
 ```
 
@@ -118,17 +120,17 @@ Override the host paths via environment variables in `.env`:
 ## Secrets (API keys)
 
 Secrets are **user-defined** — not everyone uses the same providers.
-The base `docker-compose.yml` contains no secrets at all.
-Each user creates their own `docker-compose.secrets.yml` that declares
+The base `docker/docker-compose.yml` contains no secrets at all.
+Each user creates their own `docker/docker-compose.secrets.yml` that declares
 only the keys they need.
 
 ### First-time setup
 
 ```bash
 # 1. Copy the template (done automatically by  make init)
-cp docker-compose.secrets.yml.example docker-compose.secrets.yml
+cp docker/docker-compose.secrets.yml.example docker/docker-compose.secrets.yml
 
-# 2. Edit docker-compose.secrets.yml:
+# 2. Edit docker/docker-compose.secrets.yml:
 #    - Uncomment the providers you use
 #    - Remove or comment out the ones you don't
 
@@ -142,16 +144,16 @@ chmod 600 secrets/anthropic_api_key.txt
 To add a secret that isn't in the template (e.g. Mistral):
 
 1. Create the file: `echo -n "key…" > secrets/mistral_api_key.txt && chmod 600 secrets/mistral_api_key.txt`
-2. Add it to `docker-compose.secrets.yml`:
+2. Add it to `docker/docker-compose.secrets.yml`:
    ```yaml
    services:
-     opencode:
+     spectagent:
        secrets:
          - mistral_api_key        # ← add here
 
    secrets:
      mistral_api_key:
-       file: ./secrets/mistral_api_key.txt   # ← and here
+       file: ../secrets/mistral_api_key.txt   # ← and here
    ```
 3. `make restart`
 
@@ -159,7 +161,7 @@ The entrypoint automatically exports it as `MISTRAL_API_KEY`.
 
 ### How it works
 
-1. The Makefile merges both compose files: `-f docker-compose.yml -f docker-compose.secrets.yml`.
+1. The Makefile merges both compose files: `-f docker/docker-compose.yml -f docker/docker-compose.secrets.yml`.
 2. Docker Compose mounts each declared secret as a read-only file on **tmpfs** at `/run/secrets/`.
 3. `entrypoint.sh` discovers every file in `/run/secrets/`, sanitises the name, and exports an upper-cased env var.
 4. A blocklist prevents overwriting critical vars (`PATH`, `LD_PRELOAD`, …).
@@ -168,7 +170,7 @@ The entrypoint automatically exports it as `MISTRAL_API_KEY`.
 
 - Secrets live on **tmpfs** — RAM-backed, never written to the container filesystem.
 - Keys do **not** appear in `docker inspect`, `docker compose config`, or daemon logs.
-- `docker-compose.secrets.yml` and `secrets/*.txt` are git-ignored.
+- `docker/docker-compose.secrets.yml` and `secrets/*.txt` are git-ignored.
 - File permissions default to `chmod 600` (owner-only).
 - The entrypoint rejects filenames that would overwrite security-critical env vars.
 

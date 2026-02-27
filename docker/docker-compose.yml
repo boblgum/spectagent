@@ -1,8 +1,8 @@
 services:
-  opencode:
+  spectagent:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     image: spectagent:latest
     container_name: spectagent
     stdin_open: true   # docker run -i
@@ -12,14 +12,14 @@ services:
     volumes:
       # ── Workspace (app folder) ──────────────────────────────────────
       # Created on host if it does not exist
-      - ${APP_DIR:-./workspace}:/workspace
+      - ${APP_DIR:-../workspace}:/workspace
 
       # ── Configuration mounts (read-only where possible) ─────────────
       # opencode config (e.g. opencode.json)
-      - ${OPENCODE_CONFIG_DIR:-./config/opencode}:/root/.config/opencode
+      - ${OPENCODE_CONFIG_DIR:-../config/opencode}:/root/.config/opencode
 
       # git global config
-      - ${GIT_CONFIG_FILE:-./config/git/.gitconfig}:/root/.gitconfig:ro
+      - ${GIT_CONFIG_FILE:-../config/git/.gitconfig}:/root/.gitconfig:ro
 
     # ── Secrets ───────────────────────────────────────────────────────
     # Defined by each user in docker-compose.secrets.yml

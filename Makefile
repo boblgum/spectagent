@@ -1,11 +1,11 @@
-SERVICE := opencode
-COMPOSE := docker compose -f docker-compose.yml -f docker-compose.secrets.yml
+SERVICE := spectagent
+COMPOSE := docker compose -f docker/docker-compose.yml -f docker/docker-compose.secrets.yml
 
 # ── Lifecycle ────────────────────────────────────────────────────────────────
 .PHONY: build up down restart logs
 
 build:          ## Build (or rebuild) the Docker image
-	$(COMPOSE) build
+	$(COMPOSE) build --pull --no-cache
 
 up:             ## Start container in the background
 	$(COMPOSE) up -d
@@ -44,18 +44,20 @@ git:            ## Run git inside the container (args: make git status)
 .PHONY: init env secrets
 
 env:            ## Create .env from template if it does not exist yet
-	@test -f .env && echo ".env already exists, skipping." || (cp .env.example .env && echo "Created .env – edit host paths if needed.")
+	@test -f .env && echo ".env already exists, skipping." || (cp docker/.env.example .env && echo "Created .env – edit host paths if needed.")
 
-secrets:        ## Create docker-compose.secrets.yml from example and secrets/ dir
+secrets:        ## Create docker/docker-compose.secrets.yml from example and secrets/ dir
 	@mkdir -p secrets
-	@test -f docker-compose.secrets.yml \
-		&& echo "docker-compose.secrets.yml already exists, skipping." \
-		|| (cp docker-compose.secrets.yml.example docker-compose.secrets.yml \
-		    && echo "Created docker-compose.secrets.yml – edit to select your secrets.")
+	@test -f docker/docker-compose.secrets.yml \
+		&& echo "docker/docker-compose.secrets.yml already exists, skipping." \
+		|| (cp docker/docker-compose.secrets.yml.example docker/docker-compose.secrets.yml \
+		    && echo "Created docker/docker-compose.secrets.yml – edit to select your secrets.")
 	@echo "Put each API key into its own file under secrets/ (chmod 600)."
 	@echo "Example:  echo -n 'sk-ant-…' > secrets/anthropic_api_key.txt && chmod 600 secrets/anthropic_api_key.txt"
 
-init: env secrets build up ## Full first-time setup: env, secrets, build, start
+init: env secrets          ## Full first-time setup: env, secrets, build, start
+	@mkdir -p workspace
+	@$(MAKE) build up
 
 # ── Help ─────────────────────────────────────────────────────────────────────
 .PHONY: help
