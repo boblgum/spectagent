@@ -1,6 +1,6 @@
 .idea/
 .git/
-.env
+docker/.env
 workspace/
 secrets/
 

@@ -8,11 +8,15 @@ A self-contained Docker image based on **Debian (stable-slim)** that bundles:
 | **Python** (latest stable, managed by uv) | Runtime |
 | **git** (latest from Debian repos) | Version control |
 | **opencode** (latest stable) | AI coding agent |
+| **Bun** (latest stable) | JavaScript runtime / package runner (`bunx`) |
+| **oh-my-opencode** | Agent harness for opencode — orchestrates specialist LLM agents |
 
 ## Quick start
 
 ```bash
-# 1. First-time setup: creates .env, docker-compose.secrets.yml, builds image, starts container
+# 1. First-time setup: creates .env, docker-compose.secrets.yml,
+#    runs the oh-my-opencode subscription wizard, builds image, starts container,
+#    and installs oh-my-opencode with your chosen provider flags.
 make init
 
 # 2. Edit docker/docker-compose.secrets.yml – uncomment only the providers you use
@@ -29,27 +33,71 @@ make restart
 make shell
 ```
 
-Inside the container you have `uv`, `python`, `git`, `opencode`, and `specify` available.
+Inside the container you have `uv`, `python`, `git`, `opencode`, `bun`/`bunx`, and `specify` available.
+
+## oh-my-opencode
+
+[oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) is an agent harness that supercharges opencode with specialist LLM agents (Sisyphus, Prometheus, Oracle, …), advanced LSP/AST tools, and multi-provider model routing.
+
+### Setup
+
+The subscription wizard (`make omc-setup`) asks which AI provider plans you have and persists the answers to `.omc-flags` (git-ignored). The installer then runs non-interactively inside the container.
+
+```bash
+# Step 1 – answer the subscription questions (runs on the host, writes .omc-flags)
+make omc-setup
+
+# Step 2 – apply the configuration inside the running container
+make omc-install
+```
+
+Both steps are run automatically by `make init`.
+
+To change your provider choices later:
+
+```bash
+make omc-reconfigure   # re-runs wizard + reinstalls
+```
+
+### Provider priority
+
+`Native (anthropic/, openai/, google/) > Kimi for Coding > GitHub Copilot > Venice > OpenCode Zen > Z.ai Coding Plan`
+
+> **Note**: Without a Claude Pro/Max subscription the primary **Sisyphus** agent may not perform ideally. The wizard will warn you if you answer `no` to the Claude question.
+
+### Authentication
+
+After installation, authenticate each provider through opencode's auth flow:
+
+```bash
+make shell
+opencode auth login   # then select provider and follow OAuth prompts
+```
+
 
 ## Makefile targets
 
 Run `make help` to list all available targets:
 
 ```
-  build        Build (or rebuild) the Docker image
-  up           Start container in the background
-  down         Stop and remove the container
-  restart      Rebuild image and restart container
-  logs         Follow container logs
-  shell        Open a bash shell inside the container
-  opencode     Run opencode inside the container
-  specify      Run specify (spec-kit) inside the container
-  python       Run python inside the container
-  uv           Run uv inside the container
-  git          Run git inside the container
-  env          Create .env from template if it does not exist yet
-  secrets      Create docker/docker-compose.secrets.yml from example and secrets/ dir
-  init         Full first-time setup: env, secrets, build, start
+  build          Build (or rebuild) the Docker image
+  up             Start container in the background
+  down           Stop and remove the container
+  restart        Rebuild image and restart container
+  logs           Follow container logs
+  shell          Open a bash shell inside the container
+  opencode       Run opencode inside the container
+  omc            Run oh-my-opencode CLI inside the container
+  specify        Run specify (spec-kit) inside the container
+  python         Run python inside the container
+  uv             Run uv inside the container
+  git            Run git inside the container
+  omc-setup      Interactive wizard: choose AI provider subscriptions and save flags
+  omc-install    Run the oh-my-opencode installer inside the container using saved flags
+  omc-reconfigure Re-run omc-setup wizard and reinstall
+  env            Create .env from template if it does not exist yet
+  secrets        Create docker/docker-compose.secrets.yml from example and secrets/ dir
+  init           Full first-time setup: env, secrets, omc-setup, build, start, omc-install
 ```
 
 **Lifecycle targets** (`build`, `up`, `down`, `restart`, `logs`) already have necessary flags built in, so just run them directly:
@@ -110,12 +158,14 @@ All configuration and the workspace are **mounted from the host** – nothing is
 | `./workspace` | `/workspace` | read-write |
 | `./config/opencode` | `/root/.config/opencode` | read-write |
 | `./config/git/.gitconfig` | `/root/.gitconfig` | read-only |
+| `./.omc-flags` (or placeholder) | `/run/omc-flags` | read-only |
 
-Override the host paths via environment variables in `.env`:
+Override the host paths via environment variables in `docker/.env`:
 
 - `APP_DIR` – workspace directory
 - `OPENCODE_CONFIG_DIR` – opencode config directory
 - `GIT_CONFIG_FILE` – git global config file
+- `OMC_FLAGS_FILE` – oh-my-opencode subscription flags file (relative to `docker/`, written by `make omc-setup`)
 
 ## Secrets (API keys)
 
@@ -190,6 +240,7 @@ docker run -it --rm \
   -v "$(pwd)/workspace:/workspace" \
   -v "$(pwd)/config/opencode:/root/.config/opencode" \
   -v "$(pwd)/config/git/.gitconfig:/root/.gitconfig:ro" \
+  -v "$(pwd)/.omc-flags:/run/omc-flags:ro" \
   -v "$(pwd)/secrets/anthropic_api_key.txt:/run/secrets/anthropic_api_key:ro" \
   spectagent:latest
 ```

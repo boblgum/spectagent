@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libffi-dev \
     libssl-dev \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Install uv (Python package manager) ─────────────────────────────
@@ -28,6 +29,10 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 # ── Install opencode agent ───────────────────────────────────────────
 RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 ENV PATH="/root/.opencode/bin:${PATH}"
+
+# ── Install Bun (provides bunx, required for oh-my-opencode CLI) ─────
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
 
 # ── Install GitHub Spec-Kit ─────────────────────────────────────────
 RUN uv tool install specify-cli --from git+https://github.com/github/spec-kit.git

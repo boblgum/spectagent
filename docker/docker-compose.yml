@@ -15,11 +15,17 @@ services:
       - ${APP_DIR:-../workspace}:/workspace
 
       # ── Configuration mounts (read-only where possible) ─────────────
-      # opencode config (e.g. opencode.json)
+      # opencode config (e.g. opencode.json, oh-my-opencode.json)
       - ${OPENCODE_CONFIG_DIR:-../config/opencode}:/root/.config/opencode
 
       # git global config
       - ${GIT_CONFIG_FILE:-../config/git/.gitconfig}:/root/.gitconfig:ro
+
+    environment:
+      # oh-my-opencode subscription flags (written to .env by  make omc-setup)
+      # Passed into the container so entrypoint.sh can run the installer on first start.
+      # Empty string = not configured yet, entrypoint will skip the install.
+      OMC_FLAGS: ${OMC_FLAGS:-}
 
     # ── Secrets ───────────────────────────────────────────────────────
     # Defined by each user in docker-compose.secrets.yml
