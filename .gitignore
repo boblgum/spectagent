@@ -4,3 +4,4 @@ docker/docker-compose.secrets.yml
 docker/.env
 .omc-flags
 config
+workspace
