@@ -1,18 +1,9 @@
 # ── Lifecycle ────────────────────────────────────────────────────────────────
-.PHONY: build up down restart logs
+.PHONY: build rebuild
 
 build:          ## Build (or rebuild) the Docker image
 	$(COMPOSE) build --pull --no-cache
 
-up:             ## Start container in the background
-	$(COMPOSE) up -d
-
-down:           ## Stop and remove the container
-	$(COMPOSE) down
-
-restart:        ## Rebuild image and restart container
-	$(COMPOSE) up -d --build
-
-logs:           ## Follow container logs
-	$(COMPOSE) logs -f $(SERVICE)
+rebuild:        ## Rebuild the Docker image (alias for build)
+	$(COMPOSE) build --pull --no-cache
 

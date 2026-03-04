@@ -1,7 +1,7 @@
 include make/vars.mk
 include make/lifecycle.mk
 include make/tools.mk
-include make/omc.mk
+include make/omo.mk
 include make/setup.mk
 
 # ── Help ─────────────────────────────────────────────────────────────────────

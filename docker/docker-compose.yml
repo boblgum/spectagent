@@ -4,7 +4,6 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     image: spectagent:latest
-    container_name: spectagent
     stdin_open: true   # docker run -i
     tty: true          # docker run -t
     working_dir: /workspace
@@ -21,11 +20,6 @@ services:
       # git global config
       - ${GIT_CONFIG_FILE:-../config/git/.gitconfig}:/root/.gitconfig:ro
 
-    environment:
-      # oh-my-opencode subscription flags (written to .env by  make omc-setup)
-      # Passed into the container so entrypoint.sh can run the installer on first start.
-      # Empty string = not configured yet, entrypoint will skip the install.
-      OMC_FLAGS: ${OMC_FLAGS:-}
 
     # ── Secrets ───────────────────────────────────────────────────────
     # Defined by each user in docker-compose.secrets.yml

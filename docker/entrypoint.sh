@@ -73,17 +73,4 @@ else
     echo "[spec-kit] .specify/ already exists, skipping init." >&2
 fi
 
-# ── oh-my-opencode: sentinel check (informational only) ──────────────
-# Interactive installation is done on the host via  make omc-install.
-# The sentinel file is written by that target after a successful install,
-# so this block only surfaces a hint when it hasn't been run yet.
-OMC_SENTINEL="/root/.config/opencode/.omc-installed"
-
-if [ -f "$OMC_SENTINEL" ]; then
-    echo "[omc] oh-my-opencode already installed." >&2
-else
-    echo "[omc] oh-my-opencode is not installed." >&2
-    echo "[omc] Run  make omc-install  on the host to set it up." >&2
-fi
-
 exec "$@"
