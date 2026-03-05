@@ -41,7 +41,8 @@ RUN uv tool install specify-cli --from git+https://github.com/github/spec-kit.gi
 # Created here so they exist in the image; mounted from host at runtime
 RUN mkdir -p /workspace \
              /root/.config/opencode \
-             /root/.config/git
+             /root/.config/git \
+             /root/.local/share/opencode
 
 WORKDIR /workspace
 
