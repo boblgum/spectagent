@@ -24,6 +24,9 @@ services:
       # opencode session database (conversation history, --continue works)
       - ${OPENCODE_DATA_DIR:-../data/opencode}:/root/.local/share/opencode
 
+      # opencode cache (model files, downloaded tools, etc.)
+      - ${OPENCODE_CACHE_DIR:-../data/.cache}:/root/.cache
+
 
     # ── Secrets ───────────────────────────────────────────────────────
     # Defined by each user in docker-compose.secrets.yml
