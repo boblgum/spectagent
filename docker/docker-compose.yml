@@ -1,4 +1,22 @@
 services:
+
+  # ── Basic Memory – persistent knowledge base (MCP server) ─────────────────
+  brain:
+    image: ghcr.io/basicmachines-co/basic-memory:latest
+    container_name: spectagent-brain
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${BRAIN_PORT:-8765}:8000"
+    volumes:
+      # Knowledge notes (markdown files – readable on the host)
+      - ${BRAIN_DATA_DIR:-../data/brain}:/app/data:rw
+      # Config + SQLite index (survives image updates)
+      - brain-config:/app/.basic-memory:rw
+    environment:
+      - BASIC_MEMORY_DEFAULT_PROJECT=spectagent
+      - BASIC_MEMORY_SYNC_CHANGES=true
+      - BASIC_MEMORY_LOG_LEVEL=INFO
+
   spectagent:
     build:
       context: ..
@@ -7,6 +25,8 @@ services:
     stdin_open: true   # docker run -i
     tty: true          # docker run -t
     working_dir: /workspace
+    depends_on:
+      - brain
 
     volumes:
       # ── Workspace (app folder) ──────────────────────────────────────
@@ -27,8 +47,15 @@ services:
       # opencode cache (model files, downloaded tools, etc.)
       - ${OPENCODE_CACHE_DIR:-../data/.cache}:/root/.cache
 
+      # brain ingest scripts (read-only)
+      - ../docker/brain:/brain:ro
 
     # ── Secrets ───────────────────────────────────────────────────────
     # Defined by each user in docker-compose.secrets.yml
     # (see docker-compose.secrets.yml.example)
 
+# ── Named volumes ─────────────────────────────────────────────────────────────
+volumes:
+  brain-config:
+    # Stores Basic Memory config.json + SQLite FTS index
+    # Survives image upgrades; knowledge notes live in data/brain/ on the host

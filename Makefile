@@ -3,6 +3,7 @@ include make/lifecycle.mk
 include make/tools.mk
 include make/omo.mk
 include make/setup.mk
+include make/brain.mk
 
 # ── Help ─────────────────────────────────────────────────────────────────────
 .PHONY: help
