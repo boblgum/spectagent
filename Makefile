@@ -3,6 +3,7 @@ include make/lifecycle.mk
 include make/tools.mk
 include make/omo.mk
 include make/setup.mk
+include oh-my-brain/make/openmemory.mk
 
 # ── Help ─────────────────────────────────────────────────────────────────────
 .PHONY: help

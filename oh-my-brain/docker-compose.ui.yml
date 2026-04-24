@@ -1,0 +1,24 @@
+# ── OpenMemory UI overlay ─────────────────────────────────────────────────────
+# Optional React management UI for browsing and managing memories.
+#
+# Usage (on top of the running core stack):
+#   docker compose \
+#     -f oh-my-brain/docker-compose.yml \
+#     -f oh-my-brain/docker-compose.ui.yml \
+#     --env-file oh-my-brain/.env \
+#     up -d
+
+services:
+
+  # ── OpenMemory UI ───────────────────────────────────────────────────────────
+  mem0_ui:
+    image: mem0/openmemory-ui:latest
+    restart: unless-stopped
+    depends_on:
+      - openmemory-mcp
+    ports:
+      - "${OPENMEMORY_UI_PORT:-3000}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:${OPENMEMORY_API_PORT:-8765}
+      - NEXT_PUBLIC_USER_ID=${USER:-spectagent}
+

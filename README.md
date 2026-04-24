@@ -117,6 +117,82 @@ make specify ARGS="check"
 > `make opencode` resumes the last session (`opencode --continue`).  
 > `make opencode-new` starts a fresh session.
 
+## Memory (OpenMemory)
+
+[OpenMemory](https://docs.mem0.ai/open-source/) is Mem0's self-hosted memory stack. It gives opencode agents persistent, searchable memory across sessions via an MCP server.
+
+### What it runs
+
+| Container | Image | Role |
+|---|---|---|
+| `openmemory-mcp` | `mem0/openmemory-mcp:latest` | FastAPI backend + MCP server (port 8765) |
+| `mem0_store` | `qdrant/qdrant:latest` | Vector store (internal, not exposed) |
+| `mem0_ui` *(optional)* | `mem0/openmemory-ui:latest` | React management UI |
+
+### Prerequisites
+
+OpenMemory requires an OpenAI API key for embeddings and LLM-based memory extraction.
+Add it to the secrets system:
+
+```bash
+echo -n "sk-…" > secrets/openai_api_key.txt && chmod 600 secrets/openai_api_key.txt
+```
+
+Then enable it in `docker/docker-compose.secrets.yml` (uncomment `openai_api_key` under both `services.spectagent.secrets` and `secrets:`).
+
+### Setup
+
+```bash
+# 1. Create oh-my-brain/.env from template
+make openmemory-env
+
+# 2. Set OPENAI_API_KEY in oh-my-brain/.env (or leave blank to use secrets/ only)
+#    The docker-compose.yml reads it from the host environment at stack start.
+
+# 3. Start the stack (API + Qdrant)
+make openmemory-up
+
+# 4. Verify everything is working
+make openmemory-test
+```
+
+### Enable the MCP server in opencode
+
+Edit `config/opencode/opencode.json` and set `enabled` to `true` for the `openmemory` entry:
+
+```json
+"openmemory": {
+  "type": "remote",
+  "url": "http://host.docker.internal:8765/mcp",
+  "enabled": true
+}
+```
+
+The MCP server is disabled by default — enable it only after `make openmemory-test` confirms the stack is healthy.
+
+### Optional UI
+
+```bash
+make openmemory-ui
+# Opens the management UI at http://localhost:3000
+```
+
+### Stack management
+
+| Command | What it does |
+|---|---|
+| `make openmemory-up` | Start core stack in background |
+| `make openmemory-down` | Stop stack (data preserved) |
+| `make openmemory-reset` | Stop stack + wipe all memory data |
+| `make openmemory-logs` | Tail service logs |
+| `make openmemory-status` | Show running containers |
+| `make openmemory-test` | Smoke-test the stack |
+| `make openmemory-ui` | Start optional management UI |
+
+Data is persisted in named Docker volumes (`oh-my-brain_qdrant_data`, `oh-my-brain_openmemory_db`) and survives container restarts and `make openmemory-down`.
+
+---
+
 ## Directory layout
 
 ```

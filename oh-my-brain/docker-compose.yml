@@ -1,0 +1,53 @@
+# ── OpenMemory core stack ─────────────────────────────────────────────────────
+# Services: openmemory-mcp (API + MCP server) + mem0_store (Qdrant vector DB)
+#
+# Usage:
+#   docker compose -f oh-my-brain/docker-compose.yml --env-file oh-my-brain/.env up -d
+#
+# OPENAI_API_KEY is read from the secrets/ pattern – see docker-compose.secrets.yml.
+# All other variables fall back to the defaults defined below.
+
+services:
+
+  # ── Vector store ────────────────────────────────────────────────────────────
+  mem0_store:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    # Internal only – not exposed to the host
+    expose:
+      - "6333"
+      - "6334"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/6333' 2>/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+
+  # ── OpenMemory API + MCP server ─────────────────────────────────────────────
+  openmemory-mcp:
+    build:
+      context: ../docker
+      dockerfile: openmemory-mcp.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mem0_store:
+        condition: service_healthy
+    env_file: .env
+      - "${OPENMEMORY_API_PORT:-8765}:8765"
+    environment:
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-}
+      USER: ${USER:-spectagent}
+      QDRANT_HOST: mem0_store
+      QDRANT_PORT: 6333
+    volumes:
+      - ./config/config.yaml:/usr/src/openmemory/config.yaml:rw
+      - openmemory_db:/usr/src/openmemory
+
+# ── Named volumes (persist across container restarts) ─────────────────────────
+volumes:
+  qdrant_data:
+  openmemory_db:

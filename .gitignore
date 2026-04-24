@@ -1,8 +1,10 @@
 # Sensitive files – never commit
 secrets/*.txt
 docker/docker-compose.secrets.yml
+oh-my-brain/docker-compose.secrets.yml
 docker/.env
 .omc-flags
 config
 workspace
 data
+.env
